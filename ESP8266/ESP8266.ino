@@ -22,13 +22,13 @@ float distanceInch;
 
 
 void loadCredentials() {
-  Serial.println("🔍 Starting loadCredentials()");
+  Serial.println("Starting loadCredentials()");
 
   if (!LittleFS.begin()) {
-    Serial.println("❌ Failed to mount LittleFS.");
+    Serial.println("Failed to mount LittleFS.");
     return;
   } else {
-    Serial.println("✅ LittleFS mounted.");
+    Serial.println("✅LittleFS mounted.");
   }
 
 
@@ -38,7 +38,7 @@ void loadCredentials() {
   StaticJsonDocument<256> doc;
   DeserializationError error = deserializeJson(doc, file);
   if (error) {
-    Serial.print("❌ Failed to parse JSON: ");
+    Serial.print("Failed to parse JSON: ");
     Serial.println(error.c_str());
     return;
   }
