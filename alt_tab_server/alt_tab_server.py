@@ -18,6 +18,7 @@ def altTab():
 
 def press_alt_tab():
     print("pressing super + 2")
+    # 125 = super | 3 = #2
     os.system("sudo /usr/bin/ydotool key 125:1 3:1 3:0 125:0")
 
 app.run(host='0.0.0.0')
