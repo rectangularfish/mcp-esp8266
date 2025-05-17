@@ -28,12 +28,12 @@ void loadCredentials() {
     Serial.println("Failed to mount LittleFS.");
     return;
   } else {
-    Serial.println("✅LittleFS mounted.");
+    Serial.println("LittleFS mounted.");
   }
 
 
 
-  Serial.println("📄 Opened /wifi_credentials.json");
+  Serial.println("Opened /wifi_credentials.json");
 
   StaticJsonDocument<256> doc;
   DeserializationError error = deserializeJson(doc, file);
@@ -48,7 +48,7 @@ void loadCredentials() {
   strncpy(ssid, doc["ssid"] | "", sizeof(ssid));
   file.close();
 
-  Serial.println("✅ Loaded credentials:");
+  Serial.println("Loaded credentials:");
 }
 
 
