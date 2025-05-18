@@ -3,6 +3,11 @@
 #include "wpa2_enterprise.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <WiFiClient.h>
+#include <PubSubClient.h>
+
+
+WiFiClient wifiClient;
 
 
 char username[64];
@@ -11,14 +16,37 @@ char ssid[32];
 
 const int trigPin = 12;
 const int echoPin = 14;
+const char* mqtt_server = "broker.hivemq.com";
+
+PubSubClient client(wifiClient);
 
 #define SOUND_VELOCITY 0.034
-#define CM_TO_INCH 0.393701
 
 long duration;
 float distanceCm;
 float distanceInch;
+float previousDistance = -1;
+const float threshold = 10.0;
 
+
+
+void reconnect() {
+
+  while (!client.connected()) {
+    Serial.print("Connecting to MQTT...");
+    if (client.connect("espClient123")) {
+      Serial.println("connected");
+      // Optional initial publish
+      client.publish("nikolaus/jamhacks/sensor/distance", "connected");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.println(client.state());
+      delay(5000);
+    }
+  }
+
+
+}
 
 
 void loadCredentials() {
@@ -36,6 +64,9 @@ void loadCredentials() {
   Serial.println("Opened /wifi_credentials.json");
 
   StaticJsonDocument<256> doc;
+
+  File file = LittleFS.open("/wifi_credentials.json", "r");
+
   DeserializationError error = deserializeJson(doc, file);
   if (error) {
     Serial.print("Failed to parse JSON: ");
@@ -55,16 +86,16 @@ void loadCredentials() {
 void setup() {
   Serial.begin(115200);
 
-  loadCredentials(); 
+  loadCredentials();
 
-  
+
 
 
 
   //configure wifi
   ///////// CONFIGURE //////////
   wifi_set_opmode(STATION_MODE);
-  struct station_config wifi_config; 
+  struct station_config wifi_config;
   memset(&wifi_config, 0, sizeof(wifi_config));
   strcpy((char *)wifi_config.ssid, ssid);
   wifi_station_set_config(&wifi_config);
@@ -72,14 +103,17 @@ void setup() {
   wifi_station_clear_cert_key();
   wifi_station_clear_enterprise_ca_cert();
   // Authenticate using username/password
-  wifi_station_set_wpa2_enterprise_auth(1); 
+  wifi_station_set_wpa2_enterprise_auth(1);
   wifi_station_set_enterprise_identity((uint8 *)username, strlen(username));
   wifi_station_set_enterprise_username((uint8 *)username, strlen(username));
   wifi_station_set_enterprise_password((uint8 *)password, strlen(password));
 
   ///////// EXECUTE/////////
   wifi_station_connect();
-  while (WiFi.status() != WL_CONNECTED) {Serial.println("Wifi connecting..."); delay(500);}
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Wifi connecting...");
+    delay(500);
+  }
 
   ///////// REPORT //////////
   Serial.println("IP address: ");  // Print wifi IP addess
@@ -93,25 +127,37 @@ void setup() {
   // configure hc sensor
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+
+
+  client.setServer(mqtt_server, 1883);
+
 }
 
 void loop() {
+
+  if(!client.connected()) {
+    reconnect();
+    }
+
+  client.loop();
+  
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  
+
   duration = pulseIn(echoPin, HIGH);
-  
-  distanceCm = duration * SOUND_VELOCITY/2;
-  
-  distanceInch = distanceCm * CM_TO_INCH;
-  
+
+  distanceCm = duration * SOUND_VELOCITY / 2;
+
   Serial.print("Distance (cm): ");
   Serial.println(distanceCm);
-  Serial.print("Distance (inch): ");
-  Serial.println(distanceInch);
-  
-  delay(1000);
+
+  String message = String(distanceCm);
+  client.publish("nikolaus/jamhacks/sensor/distance", message.c_str());
+
+
+ 
+
 }
