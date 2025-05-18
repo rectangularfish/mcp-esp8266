@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_mqtt import Mqtt
 import os
+import time
 
 app = Flask(__name__)
 
@@ -15,7 +16,7 @@ mqtt = Mqtt(app)
 
 # Distance tracking
 latest_distance = None
-SIGNIFICANT_CHANGE_CM = 10  # Change threshold
+SIGNIFICANT_CHANGE_CM = 20  # Change threshold
 
 def press_alt_tab():
     print("Triggering Alt+Tab!")
@@ -45,8 +46,10 @@ def handle_mqtt_message(client, userdata, message):
             print("Initial distance recorded.")
 
         latest_distance = distance
+
     except ValueError:
-        print("Invalid payload received.")
+        print("Invalid payload received:", message.payload.decode())
+        time.sleep(20)
 
 @app.route('/')
 def index():

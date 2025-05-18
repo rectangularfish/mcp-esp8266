@@ -36,7 +36,6 @@ void reconnect() {
     Serial.print("Connecting to MQTT...");
     if (client.connect("espClient123")) {
       Serial.println("connected");
-      // Optional initial publish
       client.publish("nikolaus/jamhacks/sensor/distance", "connected");
     } else {
       Serial.print("failed, rc=");
@@ -90,19 +89,14 @@ void setup() {
 
 
 
-
-
   //configure wifi
-  ///////// CONFIGURE //////////
   wifi_set_opmode(STATION_MODE);
   struct station_config wifi_config;
   memset(&wifi_config, 0, sizeof(wifi_config));
   strcpy((char *)wifi_config.ssid, ssid);
   wifi_station_set_config(&wifi_config);
-  // DISABLE authentication using certificates - But risk leaking your password to someone claiming to be "eduroam"
   wifi_station_clear_cert_key();
   wifi_station_clear_enterprise_ca_cert();
-  // Authenticate using username/password
   wifi_station_set_wpa2_enterprise_auth(1);
   wifi_station_set_enterprise_identity((uint8 *)username, strlen(username));
   wifi_station_set_enterprise_username((uint8 *)username, strlen(username));
